@@ -7,15 +7,21 @@ from src.datacenter.task import *
 import random
 
 
+HOURS_PER_DAY = 24
 REMOVED_EVENT = 'R'
 MACHINE_EVENTS_PATH = "data/machine_events_sample.json"
 
 
 class Cluster:
-    def __init__(self):
+    def __init__(self, simulation_length):
         self.VCC = 0
+        self.VCC_hist = [0 for _ in range(HOURS_PER_DAY)]  # keeps track of the VCC values in the day
+
         self.capacity = 0
         self.max_capacity = 0
+        # daily_capacity_req[d] = "total daily capacity required by all tasks in day 'd'"
+        self.daily_capacity_req = [0 for _ in range(simulation_length // HOURS_PER_DAY)]
+
         self.t = 0
 
         self.machines = self.init_machines()  # dict: machine_id -> Machine obj
@@ -36,8 +42,16 @@ class Cluster:
             machines[machine_id] = Machine(machine_id, max_capacity)
         return machines
     
-    def set_VCC(self, VCC):
-        self.VCC = VCC
+    def set_VCC(self, new_VCC):
+        """
+        Sets current VCC and records it in day's history.
+
+        If 'new_VCC' is less than current 'capacity', then evicts tasks.
+        """
+        self.VCC = new_VCC
+        hour_of_day = self.datacenter.t % HOURS_PER_DAY
+        self.VCC_hist[hour_of_day] = new_VCC
+
         self.obey_vcc()
     
     def select_machine_to_schedule(self):
@@ -90,6 +104,9 @@ class Cluster:
             failed_schedule = self.schedule_task(task)
 
     def stop_finished_tasks(self):
+        """
+        TODO: document
+        """
         while True:
             if len(self.event_q) == 0:
                 break
@@ -143,3 +160,6 @@ class Cluster:
             remaining_duration = prev_end_time - self.t
             new_task = Task(evicted_task.id, remaining_duration, evicted_task.capacity)
             self.task_q.append(new_task)
+
+    def add_daily_capacity_req(self):
+        pass
