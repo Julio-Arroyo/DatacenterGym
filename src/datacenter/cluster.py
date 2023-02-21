@@ -1,4 +1,5 @@
 from collections import deque
+from collections.abc import Sequence
 from src.datacenter.machine import *
 from heapq import *
 from src.util.event import *
@@ -13,7 +14,7 @@ MACHINE_EVENTS_PATH = "data/machine_events_sample.json"
 
 
 class Cluster:
-    def __init__(self, simulation_length):
+    def __init__(self, simulation_length: int):
         self.VCC = 0
         self.VCC_hist = [0 for _ in range(HOURS_PER_DAY)]  # keeps track of the VCC values in the day
 
@@ -25,15 +26,15 @@ class Cluster:
         self.t = 0
 
         self.machines = self.init_machines()  # dict: machine_id -> Machine obj
-        for machine_id in self.machines:
-            self.max_capacity += self.machines[machine_id].max_capacity
+        for machine in self.machines.values():
+            self.max_capacity += machine.max_capacity
 
         self.event_q = []  # Min heap with end times as priority
-        self.task_to_eq_entry = dict()
+        self.task_to_eq_entry = {}
         self.task_q = deque()  # Holds tasks before being scheduled
     
-    def init_machines(self) -> dict():
-        machines = dict()
+    def init_machines(self) -> dict[str, Machine]:
+        machines = {}
         data = pd.read_json(MACHINE_EVENTS_PATH, lines=True)
         for i in range(len(data)):
             # TODO: consider adding machines only if event is ADD
@@ -42,14 +43,14 @@ class Cluster:
             machines[machine_id] = Machine(machine_id, max_capacity)
         return machines
     
-    def set_VCC(self, new_VCC):
+    def set_VCC(self, new_VCC: float) -> None:
         """
         Sets current VCC and records it in day's history.
 
         If 'new_VCC' is less than current 'capacity', then evicts tasks.
         """
         self.VCC = new_VCC
-        hour_of_day = self.datacenter.t % HOURS_PER_DAY
+        hour_of_day = self.t % HOURS_PER_DAY
         self.VCC_hist[hour_of_day] = new_VCC
 
         self.obey_vcc()
@@ -57,14 +58,13 @@ class Cluster:
     def select_machine_to_schedule(self):
         return random.choice(list(self.machines.keys()))
     
-    def schedule_task(self, task: Task):
+    def schedule_task(self, task: Task) -> bool:
         """
         Assigns 'task' to a machine for it to run on.
 
         Returns: boolean indicating if schedule was successful.
         """
         # find a machine and run task on it
-        machine_id = None
         attempt_count = 0
         while True:
             machine_id = self.select_machine_to_schedule()
@@ -91,7 +91,7 @@ class Cluster:
         
         return True
     
-    def schedule_tasks(self):
+    def schedule_tasks(self) -> None:
         failed_schedule = False
         while True:
             # NOTE: if there is a huge task (in terms of capacity requirement) at the front of the queue, 
@@ -103,7 +103,7 @@ class Cluster:
             task = self.task_q.popleft()
             failed_schedule = self.schedule_task(task)
 
-    def stop_finished_tasks(self):
+    def stop_finished_tasks(self) -> None:
         """
         TODO: document
         """
@@ -125,22 +125,20 @@ class Cluster:
             else:
                 raise Exception("UNKNOWN EVENT TYPE")
 
-    def enqueue_tasks(self, tasks):
+    def enqueue_tasks(self, tasks: Sequence[Task]) -> None:
         """
         Takes a list of all tasks submitted at time T and enqueues them.
         """
-        for task in tasks:
-            self.task_q.append(task)
+        self.task_q.extend(tasks)
 
-    def select_machine_to_evict(self):
-        machine_id = None
+    def select_machine_to_evict(self) -> str:
         while True:
             machine_id = random.choice(list(self.machines.keys()))
             if len(self.machines[machine_id].tasks) > 0:
                 break
         return machine_id
 
-    def obey_vcc(self):
+    def obey_vcc(self) -> None:
         """
         It may be possible that the VCC is reduced, so that a capacity
         that was previously allowed is now above the maximum allowed
