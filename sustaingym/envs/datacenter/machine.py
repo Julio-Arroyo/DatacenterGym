@@ -1,4 +1,4 @@
-from src.datacenter.task import Task
+from sustaingym.envs.datacenter.task import Task
 import random
 
 

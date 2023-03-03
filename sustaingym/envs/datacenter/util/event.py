@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 from enum import Enum
-from src.datacenter.task import *
+from sustaingym.envs.datacenter.task import *
 
 class EventType(Enum):
     TASK_FINISHED = 1
