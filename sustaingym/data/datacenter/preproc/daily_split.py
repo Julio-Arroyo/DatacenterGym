@@ -74,6 +74,7 @@ def save_data_to_csv(task_id_to_duration, task_id_to_cpu, task_id_to_priority):
             for task_id in task_id_to_duration:
                 init_start_time = task_id_to_duration[task_id].initial_start_time
                 duration = task_id_to_duration[task_id].duration
+                cpu = task_id_to_cpu[task_id]
                 priority = task_id_to_priority[task_id]
                 
                 # # DEBUG
@@ -85,13 +86,16 @@ def save_data_to_csv(task_id_to_duration, task_id_to_cpu, task_id_to_priority):
                 #     print("PRIORITY IS NONE")
 
                 if (init_start_time is None or  # no 'SCHEDULE' event
+                    init_start_time == 0 or
+                    duration == 0 or
+                    cpu == 0 or
                     (init_start_time < start_time or init_start_time >= end_time)):
                     continue
                 
                 f.write("%d,%s,%d,%2f,%d\n"%(init_start_time,
                                             task_id,
                                             duration,
-                                            task_id_to_cpu[task_id],
+                                            cpu,
                                             priority))
 
 
