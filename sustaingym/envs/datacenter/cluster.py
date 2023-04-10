@@ -23,16 +23,16 @@ ONEDAY = timedelta(days=1)
 class Cluster:
     def __init__(self, simulation_length: int, start_time: datetime,
                 end_time: datetime, balancing_authority: str):
-        self.VCC = 0
+        self.VCC = 0  # fraction of self.max_capacity that can be used
         self.VCC_hist = [0 for _ in range(HOURS_PER_DAY)]  # VCC over last day
 
         self.capacity = 0
-        self.max_capacity = 0
+        self.max_capacity = 0  # sum of all machines' max_capacities
 
         self.carbon_intensities = self.get_carbon_data(start_time, end_time, balancing_authority)
 
         # self.daily_capacity_req[d] = "total daily capacity required by all tasks in day 'd'"
-        self.daily_capacity_req = [0 for _ in range(30)]  # 30 days
+        self.daily_capacity_req = [0 for _ in range(31)]  # 31 days
 
         self.t = 0  # in hours
 
@@ -102,7 +102,7 @@ class Cluster:
     def compute_SLO_violation_cost(self) -> float:
         """
         if EOD
-            r = max(0, 0.97*[day capacity required] - [sum VCCs over previous day])
+            r = max(0, 0.97*[day capacity required] - [sum of VCC-allocated capacity over previous day])
         otherwise
             r = 0
         """
@@ -112,7 +112,7 @@ class Cluster:
 
         current_day = self.t // HOURS_PER_DAY
         capacity_requirement = self.daily_capacity_req[current_day]
-        total_allocated_capacity = sum(self.VCC_hist)
+        total_allocated_capacity = sum(self.VCC_hist) * self.max_capacity
 
         penalty = max(0, 0.97*capacity_requirement - total_allocated_capacity)
         self.VCC_hist = [0 for _ in range(HOURS_PER_DAY)]  # reset VCC history for next day
@@ -224,7 +224,7 @@ class Cluster:
         capacity set by the new VCC. Evict until capacity falls below
         VCC.
         """
-        while self.capacity > self.VCC:
+        while self.capacity > self.VCC*self.max_capacity:
             machine_id = self.select_machine_to_evict()
             evicted_task = self.machines[machine_id].evict()
 
