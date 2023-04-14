@@ -170,7 +170,6 @@ class Cluster:
         """
         Dequeues tasks and schedules them as long as VCC isn't exceeded.
         """
-        # TODO (Julio) implement scheduling all non-shiftable load
         failed_schedule = False
         while True:
             # NOTE: if there is a huge task (in terms of capacity requirement) at the front of the queue, 

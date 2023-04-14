@@ -1,10 +1,10 @@
 from sustaingym.envs.datacenter.cluster import *
 import pandas as pd
-import gym
+import gymnasium as gym
 
 
 TASK_DATA_PATH = "sustaingym/data/datacenter/daily_events"
-SIMULATION_LENGTH = 72  # In hours
+SIMULATION_LENGTH = 672  # In hours
 HOURS_PER_DAY = 24
 MICROSEC_PER_HOUR = 60*60*1000000
 START_DELAY = 600  # trace period starts at 600 seconds
@@ -16,10 +16,11 @@ PRIORITY_THRESH = 120  # priority values geq are considered inflexible
 
 
 class DatacenterGym(gym.Env):
-    def __init__(self):
+    def __init__(self, env_config={}):
         self.datacenter = Cluster(SIMULATION_LENGTH, SIM_START_TIME,
                                   SIM_END_TIME, BALANCING_AUTHORITY)
-    
+        self.action_space = gym.spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(27,), dtype=np.float32)
         self.task_data = None
         self.time_window = MICROSEC_PER_HOUR
         self.episode_len = SIMULATION_LENGTH
@@ -28,9 +29,9 @@ class DatacenterGym(gym.Env):
         # TODO
         return
 
-    def reset(self):
-        # TODO
-        return super().reset()
+    def reset(self, *, seed=None, options=None):
+        super().reset()
+        return {}
     
     def render(self):
         print(self.datacenter.get_state())
@@ -52,7 +53,10 @@ class DatacenterGym(gym.Env):
 
         self.datacenter.t += 1
 
-        return (obs, reward, self.datacenter.t >= self.episode_len)
+        truncated = False
+        info = {}
+
+        return (obs, reward, self.datacenter.t >= self.episode_len, truncated, info)
 
     def close(self):
         # TODO
