@@ -31,15 +31,17 @@ class DatacenterGym(gym.Env):
 
     def reset(self, *, seed=None, options=None):
         super().reset()
-        return {}
+        obs = self.datacenter.get_state()
+        info = {}
+        return obs, info
     
     def render(self):
         print(self.datacenter.get_state())
 
-    def step(self, VCC):
-        """
-        Returns 3-tuple (state, reward, terminal)
-        """
+    def step(self, VCC: np.ndarray):
+        assert VCC.shape == self.action_space.shape  # (1,)
+
+        VCC = VCC[0] # only care about scalar
         self.datacenter.stop_finished_tasks()
 
         self.datacenter.set_VCC(VCC)
@@ -53,10 +55,11 @@ class DatacenterGym(gym.Env):
 
         self.datacenter.t += 1
 
+        terminated = self.datacenter.t >= self.episode_len
         truncated = False
         info = {}
 
-        return (obs, reward, self.datacenter.t >= self.episode_len, truncated, info)
+        return (obs, reward, terminated, truncated, info)
 
     def close(self):
         # TODO
