@@ -226,6 +226,7 @@ class Cluster:
         while self.capacity > self.VCC*self.max_capacity:
             machine_id = self.select_machine_to_evict()
             evicted_task = self.machines[machine_id].evict()
+            self.capacity -= evicted_task.capacity
 
             # mark the entry as invalid in the priority queue
             eq_entry = self.task_to_eq_entry[evicted_task]
