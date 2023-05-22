@@ -5,6 +5,7 @@ import sys
 sys.path.append(".")
 from sustaingym.envs.datacenter import DatacenterGym
 
+
 if __name__ == "__main__":
     ray.init()
     # TODO:
