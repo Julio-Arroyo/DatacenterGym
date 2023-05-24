@@ -1,1 +1,7 @@
-datacenter/daily_events/*.csv
+# datacenter/daily_events/*.csv
+datacenter/task_durations_W_PRIORITY.csv
+datacenter/util/__pycache__/
+datacenter/preproc/format_inflex_and_flex_task_data.py
+datacenter/sample_instance_events.json
+instance_events_naive_collection_ids_less_12335081865_w_task_id_only_relevant_events.json
+machine_attributes-000000000000.json
