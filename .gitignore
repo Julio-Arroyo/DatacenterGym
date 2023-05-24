@@ -4,6 +4,8 @@
 sandbox/
 logs/
 plots/
+experiments.sh
+sustaingym/envs/datacenter/util/__pycache__/
 ## END CUSTOM EXCLUSIONS
 
 # Byte-compiled / optimized / DLL files
